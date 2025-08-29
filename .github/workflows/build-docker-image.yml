@@ -1,11 +1,9 @@
-name: Build and Push Docker Image
+name: Build and Push Docker Image (Simple)
 
 on:
   push:
     branches: [ "main", "master" ]
     tags: [ 'v*.*.*' ]
-  pull_request:
-    branches: [ "main", "master" ]
 
 env:
   REGISTRY: ghcr.io
@@ -26,57 +24,32 @@ jobs:
       uses: docker/setup-buildx-action@v3
 
     - name: Log in to Container Registry
-      if: github.event_name != 'pull_request'
       uses: docker/login-action@v3
       with:
         registry: ${{ env.REGISTRY }}
         username: ${{ github.actor }}
         password: ${{ secrets.GITHUB_TOKEN }}
 
-    - name: Extract metadata (tags, labels)
+    - name: Extract metadata
       id: meta
       uses: docker/metadata-action@v5
       with:
         images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
         tags: |
           type=ref,event=branch
-          type=ref,event=pr
           type=semver,pattern={{version}}
-          type=semver,pattern={{major}}.{{minor}}
-          type=semver,pattern={{major}}
           type=raw,value=latest,enable={{is_default_branch}}
 
     - name: Prepare build context
       run: |
-        # 确保目录存在
         mkdir -p build/buiding/injector-box/root/bin || true
         
-        # 复制 funtool 相关文件到构建上下文
-        if [ -f "build/funtool/funtool.4.0.0.26.disable.auto.update.exe" ]; then
-          cp build/funtool/funtool.4.0.0.26.disable.auto.update.exe build/buiding/injector-box/root/bin/
-          echo "✓ Copied funtool executable"
-        else
-          echo "⚠ Warning: funtool executable not found"
-        fi
+        # 复制必要文件
+        [ -f "build/funtool/funtool.4.0.0.26.disable.auto.update.exe" ] && cp build/funtool/funtool.4.0.0.26.disable.auto.update.exe build/buiding/injector-box/root/bin/ || echo "funtool.exe not found"
+        [ -f "build/funtool/inject-dll" ] && cp build/funtool/inject-dll build/buiding/injector-box/root/bin/ || echo "inject-dll not found"  
+        [ -f "build/funtool/inject-monitor" ] && cp build/funtool/inject-monitor build/buiding/injector-box/root/bin/ || echo "inject-monitor not found"
         
-        if [ -f "build/funtool/inject-dll" ]; then
-          cp build/funtool/inject-dll build/buiding/injector-box/root/bin/
-          echo "✓ Copied inject-dll"
-        else
-          echo "⚠ Warning: inject-dll not found"
-        fi
-        
-        if [ -f "build/funtool/inject-monitor" ]; then
-          cp build/funtool/inject-monitor build/buiding/injector-box/root/bin/
-          echo "✓ Copied inject-monitor"
-        else
-          echo "⚠ Warning: inject-monitor not found"
-        fi
-        
-        # 显示构建上下文内容用于调试
-        echo "Build context structure:"
-        ls -la build/buiding/injector-box/
-        echo "Binary files:"
+        echo "Files in build context:"
         ls -la build/buiding/injector-box/root/bin/
 
     - name: Build and push Docker image
@@ -84,16 +57,11 @@ jobs:
       with:
         context: build/buiding/injector-box
         platforms: linux/amd64
-        push: ${{ github.event_name != 'pull_request' }}
+        push: true
         tags: ${{ steps.meta.outputs.tags }}
         labels: ${{ steps.meta.outputs.labels }}
-        cache-from: type=gha
-        cache-to: type=gha,mode=max
 
-    - name: Generate artifact attestation
-      if: github.event_name != 'pull_request'
-      uses: actions/attest-build-provenance@v1
-      with:
-        subject-name: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME}}
-        subject-digest: ${{ steps.build.outputs.digest }}
-        push-to-registry: true
+    - name: Success notification
+      run: |
+        echo "✅ Build completed successfully!"
+        echo "📦 Image pushed to: ${{ steps.meta.outputs.tags }}"

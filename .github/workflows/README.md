@@ -94,12 +94,34 @@ git push origin v1.0.0  # 构建发布版本
 1. **权限错误**：确保仓库启用了 GitHub Actions 和包权限
 2. **文件缺失**：检查 `build/funtool/` 目录下是否包含必要的二进制文件
 3. **构建失败**：查看 Actions 日志，检查 Dockerfile 和依赖项
+4. **ID Token 错误** (`Unable to get ACTIONS_ID_TOKEN_REQUEST_URL`)：
+   - 这是 GitHub Actions 在某些情况下的已知问题
+   - 解决方案：我们已经移除了导致问题的 `actions/attest-build-provenance` 步骤
+   - 如果仍有问题，可以使用简化版工作流：`build-docker-image-simple.yml`
+
+### 如果遇到 ID Token 错误
+
+如果你仍然遇到 `Error: Failed to get ID token` 错误，请使用简化版工作流：
+
+1. **禁用主工作流**：重命名 `build-docker-image.yml` 为 `build-docker-image.yml.backup`
+2. **启用简化版**：重命名 `build-docker-image-simple.yml` 为 `build-docker-image.yml`
+3. **推送更改**：提交并推送到 GitHub
+
+```bash
+# 切换到简化版工作流
+mv .github/workflows/build-docker-image.yml .github/workflows/build-docker-image.yml.backup
+mv .github/workflows/build-docker-image-simple.yml .github/workflows/build-docker-image.yml
+git add .
+git commit -m "fix: use simplified GitHub Actions workflow"
+git push
+```
 
 ### 调试建议
 
 1. 查看 Actions 运行日志中的 "Prepare build context" 步骤
 2. 检查文件复制是否成功
 3. 验证 Docker 构建上下文结构
+4. 确保仓库设置中启用了 "Actions" 和 "Packages" 权限
 
 ## 安全注意事项
 
