@@ -1,1 +1,35 @@
+# IDE
 /.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+.DS_Store?
+Thumbs.db
+ehthumbs.db
+
+# Logs
+*.log
+logs/
+
+# Docker
+.docker/
+
+# Data directories
+data/
+wxFiles/
+
+# Build artifacts
+*.exe
+*.so
+*.dylib
+
+# Go
+vendor/
+*.mod
+*.sum
+go.work
+go.work.sum

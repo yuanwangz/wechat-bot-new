@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 mkdir buiding || true
-cp funtool/funtool_3.6.0.18-1.0.0015非注入版.exe buiding/injector-box/root/bin/
+cp funtool/funtool.4.0.0.26.disable.auto.update.exe buiding/injector-box/root/bin/
 cp funtool/inject-dll buiding/injector-box/root/bin/
 cp funtool/inject-monitor buiding/injector-box/root/bin/
 cd buiding/injector-box
